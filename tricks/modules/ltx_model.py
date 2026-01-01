@@ -6,9 +6,9 @@ import torch
 from comfy.ldm.lightricks.model import (
     BasicTransformerBlock,
     LTXVModel,
-    apply_rotary_emb,
     precompute_freqs_cis,
 )
+from comfy.ldm.flux.math import apply_rope1
 from comfy.ldm.lightricks.symmetric_patchifier import latent_to_pixel_coords
 from torch import nn
 
@@ -56,10 +56,8 @@ class LTXModifiedCrossAttention(nn.Module):
         q = self.q_norm(q)
         k = self.k_norm(k)
 
-        if pe is not None:
-            q = apply_rotary_emb(q, pe)
-            k = apply_rotary_emb(k, pe)
-
+        q, k = apply_rope1(q, k)
+        
         feta_score = None
         if (
             transformer_options.get("feta_weight", 0) > 0
